@@ -11,7 +11,7 @@ last_remaining = 0
 def get_stat_cpu(n_defence:int,n_attack:int,n_echantillon:int)->tuple[int,int,float,float]:
     """Return number win  and mean of soldier remaining then rate of them"""
     global last_n_win,last_remaining
-    process = subprocess.run([".\\RISK_CPP\\x64\\Release\\RISK_CPP.exe","--def",str(n_defence),"--att",str(n_attack),"--N",str(n_echantillon)],shell=True,capture_output=True)
+    process = subprocess.run([".\\RISK_CPP\\x64\\Release\\RISK_CPP.exe","--def",str(n_defence),"--att",str(n_attack),"--N",str(n_echantillon),'-q'],shell=True,capture_output=True)
     if process.returncode!=0:
         print(f"sdtout : {process.stdout} stderr : {process.stderr}")
         raise Exception("Erreur lors du lancement du noyau C++")
@@ -31,7 +31,7 @@ def get_stat_cpu(n_defence:int,n_attack:int,n_echantillon:int)->tuple[int,int,fl
 def get_stat_gpu(n_defence:int,n_attack:int,n_echantillon:int)->tuple[int,int,float,float]:
     """Return number win  and mean of soldier remaining then rate of them"""
     global last_n_win,last_remaining
-    process = subprocess.run([".\\RISK_CUDA\\x64\\Release\\RISK_CUDA.exe","--def",str(n_defence),"--att",str(n_attack),"--N",str(n_echantillon),"--thread 128"],shell=True,capture_output=True)
+    process = subprocess.run([".\\RISK_CUDA\\x64\\Release\\RISK_CUDA.exe","--def",str(n_defence),"--att",str(n_attack),"--N",str(n_echantillon),"-q"],shell=True,capture_output=True)
     if process.returncode!=0:
         print(f"stdout : {process.stdout} stderr : {process.stderr}")
         raise Exception("Erreur lors du lancement du noyau C++")
@@ -91,7 +91,7 @@ def get_stat_python(n_defence:int,n_attack:int,n_echantillon:int)->tuple[int,int
     las_mean_remaining = mean_remaining
     return n_win,mean_remaining,n_win/n_echantillon,n_soldier_remaining/n_echantillon
 
-device = "cpu"
+device = "gpu"
 
 if device=="cpu":
     get_stat = get_stat_cpu
@@ -103,7 +103,7 @@ START_N = 1
 END_N = 1500
 STEPS = 10
 SIZE = (END_N-START_N)//STEPS
-TAILLE_ECHANTILLON = 1000
+TAILLE_ECHANTILLON = 10000
 
 N_DEF =  np.array([[DEF for ATT in range(START_N,END_N,STEPS)] for DEF in range(START_N,END_N,STEPS)])
 N_ATT = np.array([[ATT for ATT in range(START_N,END_N,STEPS)] for DEF in range(START_N,END_N,STEPS)])

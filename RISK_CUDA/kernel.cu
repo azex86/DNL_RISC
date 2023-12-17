@@ -141,12 +141,13 @@ __device__ int simulateFight(int defense, int attack, curandState_t& state)
 }
 
 
-__global__ void makeRandom(int *data, unsigned int size,unsigned int n_thread,int seed,int def,int att)
+__global__ void makeRandom(int *data, unsigned int size,unsigned int n_thread , unsigned int n_block,int seed,int def,int att)
 {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    unsigned int id = threadIdx.x;
-    int start = size/n_thread * id + min(size%n_thread,id) ;
-    int end = size /n_thread*(id+1) + min(size % n_thread, id + 1);
+    unsigned int id = threadIdx.x + blockIdx.x*n_thread;
+
+    int start = size/(n_thread*n_block) * id + min(size% (n_thread * n_block),id) ;
+    int end = size / (n_thread * n_block) *(id+1) + min(size % (n_thread * n_block), id + 1);
     curandState_t state;
 
     curand_init(seed, tid, 0, &state); // Initialisation du générateur de nombres aléatoires
@@ -160,7 +161,7 @@ __global__ void makeRandom(int *data, unsigned int size,unsigned int n_thread,in
 
 int main(int argc,char **argv)
 {
-    int n_thread = 100,n_block = 1;
+    int n_thread = 128,n_block = 10;
     int n_defence = 3, n_attack = 3;
     int n_echantillon = 1000;
     bool verbose = true;
@@ -196,8 +197,9 @@ int main(int argc,char **argv)
                             {
                                 verbose = false;
                             }
-    }
-
+                            else if (strcmp(argv[i], "--block") == 0)
+                           n_block = stoi(argv[++i]);
+ }   
 
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -207,7 +209,7 @@ int main(int argc,char **argv)
     cudaMalloc(&gpu_data, n_echantillon * sizeof(int));
     unsigned int seed = (unsigned int)time(NULL); // Utiliser le temps actuel comme graine
 
-    makeRandom << <n_block, n_thread >> > (gpu_data, n_echantillon, n_thread,seed, n_defence,n_attack);
+    makeRandom << <n_block, n_thread >> > (gpu_data, n_echantillon, n_thread,n_block,seed, n_defence,n_attack);
     cudaDeviceSynchronize();
     cudaMemcpy(cpu_data, gpu_data, n_echantillon *sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
 
