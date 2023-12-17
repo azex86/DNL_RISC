@@ -35,39 +35,49 @@ __device__ inline void sort(short* data, short size)
     }
     else
     {
-        short temp1;
-        if (data[0] < data[1])
+        short temp;
+#define A data[0]
+#define B data[1]
+#define C data[2]
+        
+        if (A>B)
         {
-            temp1 = data[0];
-            if (data[1] < data[2])
+            if (C > B)
             {
-                
-                data[0] = data[2];
-                data[2] = temp1;
+                temp = B;
+                B = C;
+                C = temp;
             }
-            else
-            {
-                data[0] = data[1];
-                data[1] = data[2];
-                data[2] = temp1;
+            else {
+                temp = A;
+                A = C;
+                C = B;
+                B = temp;
             }
         }
         else
         {
-            if (data[0] < data[2])
+            if (B > C)
             {
-                temp1 = data[0];
-                data[0] = data[2];
-                data[2] = temp1;
+                if (A > C)
+                {
+                    temp = A;
+                    A = B;
+                    B = temp;
+                }
+                else
+                {
+                    temp = A;
+                    A = B;
+                    B = C;
+                    C = temp;
+                }
             }
             else
             {
-                if (data[2] > data[1])
-                {
-                    temp1 = data[1];
-                    data[1] = data[2];
-                    data[2] = temp1;
-                }
+                temp = A;
+                A = C;
+                C = temp;
             }
         }
     }
@@ -202,9 +212,9 @@ int main(int argc,char **argv)
     cudaMemcpy(cpu_data, gpu_data, n_echantillon *sizeof(int), cudaMemcpyKind::cudaMemcpyDeviceToHost);
 
 
-    long n_win = 0;
-    long n_remaining = 0;
-
+    int n_win = 0;
+    int n_remaining = 0;
+  
     for (int i = 0; i < n_echantillon; i++)
     {
         n_remaining += cpu_data[i];
@@ -221,10 +231,9 @@ int main(int argc,char **argv)
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> temps_generation = end - start;
         std::cout << "Temps de generation : " << temps_generation.count() << " secondes" << std::endl;
-        cout << SET_RETURN_ECHANTILLONNAGE(n_win,n_remaining) << endl;
     }
-
-   
+    cout.write((char*)&n_win, 4);
+    cout.write((char*)&n_remaining, 4);
     return 0;
 }
 
