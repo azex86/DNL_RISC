@@ -25,43 +25,105 @@ struct Random_base
 
 
 void help();
+inline void sort(short* data, short size)
+{
+    if (size == 1)
+        return;
+    else if (size == 2)
+    {
 
+        if (data[0] < data[1])
+        {
+            short temp;
+            temp = data[0];
+            data[0] = data[1];
+            data[1] = temp;
+        }
+        return;
+    }
+    else
+    {
+        short temp;
+#define A data[0]
+#define B data[1]
+#define C data[2]
+
+        if (A > B)
+        {
+            if (C > B)
+            {
+                temp = B;
+                B = C;
+                C = temp;
+            }
+            else {
+                temp = A;
+                A = C;
+                C = B;
+                B = temp;
+            }
+        }
+        else
+        {
+            if (B > C)
+            {
+                if (A > C)
+                {
+                    temp = A;
+                    A = B;
+                    B = temp;
+                }
+                else
+                {
+                    temp = A;
+                    A = B;
+                    B = C;
+                    C = temp;
+                }
+            }
+            else
+            {
+                temp = A;
+                A = C;
+                C = temp;
+            }
+        }
+    }
+}
 //Return the number of soldier remain at the end ob fight
 static int simulate_fight(int defense, int attack,Random_base& alea)
 {
-    vector<short> die_defend;
-    vector<short> die_attack;
+    short die_defend[3];
+    short die_attack[3];
     while (defense>0 && attack >0)
     {
-        die_attack = vector<short>();
-        die_defend = vector<short>();
         if (attack > 2)
         {
-            die_attack.push_back(alea.get_random());
-            die_attack.push_back(alea.get_random());
-            die_attack.push_back(alea.get_random());
+            die_attack[0]=alea.get_random();
+            die_attack[1] = alea.get_random();
+            die_attack[2] = alea.get_random();
         }
         else if (attack == 2)
         {
-            die_attack.push_back(alea.get_random());
-            die_attack.push_back(alea.get_random());
+            die_attack[0] = alea.get_random();
+            die_attack[1] = alea.get_random();
         }
         else
         {
-            die_attack.push_back(alea.get_random());
+            die_attack[0] = alea.get_random();
         }
-        sort(die_attack.begin(), die_attack.end(), [](short a, short b) { return a > b; });
+        sort(die_attack,attack);
 
         if (defense > 1)
         {
-            die_defend.push_back(alea.get_random());
-            die_defend.push_back(alea.get_random());
+            die_defend[0] = alea.get_random();
+            die_defend[1] = alea.get_random();
         }
         else
         {
-            die_defend.push_back(alea.get_random());
+            die_defend[0] = alea.get_random();
         }
-        sort(die_defend.begin(), die_defend.end(), [](short a, short b) { return a > b; });
+        sort(die_defend,defense);
 
         int _min = min(attack, defense);
         if (die_attack[0] > die_defend[0])
