@@ -1,7 +1,7 @@
 # DNL_RISC
 Simulation a risc problem
 
-![Video](Courbe_en_fonction_de_N_ATTACK_0_to_1500.png?raw=true "Title")
+![Video](Courbe_en_fonction_de_N_SOLDAT_0_to_500.png?raw=true "Title")
 
 ![Image](animation_N_ATT.gif)
 
