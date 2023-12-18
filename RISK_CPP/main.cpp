@@ -6,22 +6,9 @@
 #include <thread>
 using namespace std;
 
-struct Random_base
-{
-    std::random_device rd;
-    std::mt19937 gen;
-    std::uniform_int_distribution<short> distribution;
-    Random_base()
-    {
-        gen = mt19937(rd());
-        distribution = uniform_int_distribution<short>(1, 6);
-    }
-    short get_random()
-    {
-        return this->distribution(gen);
-    }
-};
-
+int getRandomNumber() {
+    return 1 + rand() % (6 - 1 + 1);
+}
 
 
 void help();
@@ -91,7 +78,7 @@ inline void sort(short* data, short size)
     }
 }
 //Return the number of soldier remain at the end ob fight
-static int simulate_fight(int defense, int attack,Random_base& alea)
+static int simulate_fight(int defense, int attack)
 {
     short die_defend[3];
     short die_attack[3];
@@ -99,29 +86,29 @@ static int simulate_fight(int defense, int attack,Random_base& alea)
     {
         if (attack > 2)
         {
-            die_attack[0]=alea.get_random();
-            die_attack[1] = alea.get_random();
-            die_attack[2] = alea.get_random();
+            die_attack[0]= getRandomNumber();
+            die_attack[1] = getRandomNumber();
+            die_attack[2] = getRandomNumber();
         }
         else if (attack == 2)
         {
-            die_attack[0] = alea.get_random();
-            die_attack[1] = alea.get_random();
+            die_attack[0] = getRandomNumber();
+            die_attack[1] = getRandomNumber();
         }
         else
         {
-            die_attack[0] = alea.get_random();
+            die_attack[0] = getRandomNumber();
         }
         sort(die_attack,attack);
 
         if (defense > 1)
         {
-            die_defend[0] = alea.get_random();
-            die_defend[1] = alea.get_random();
+            die_defend[0] = getRandomNumber();
+            die_defend[1] = getRandomNumber();
         }
         else
         {
-            die_defend[0] = alea.get_random();
+            die_defend[0] = getRandomNumber();
         }
         sort(die_defend,defense);
 
@@ -162,10 +149,9 @@ static void echantillonage(int n_defend, int n_attack, int n_echantillon,int n_t
             //printf("lancement du thread sur %i valeurs\n", n_echantillon);
             *out = 0;
             *reste = 0;
-            Random_base alea;
             for (int j = 0; j < n_echantillon; j++)
             {
-                int temp = simulate_fight(n_defend, n_attack, alea);
+                int temp = simulate_fight(n_defend, n_attack);
                 if(temp>0)
                     (*out)++;
                 *reste += temp;
@@ -187,9 +173,9 @@ static void echantillonage(int n_defend, int n_attack, int n_echantillon,int n_t
 
 int main(int argc,char **argv) {
     
-    int n_defence = 100;
-    int n_attack = 85;
-    int n_echantillon = 10000;
+    int n_defence = 10000;
+    int n_attack = 8500;
+    int n_echantillon = 1000000;
     int n_thread = thread::hardware_concurrency();
     bool verbose = true;
     for (int i = 0; i < argc; i++)
@@ -222,8 +208,6 @@ int main(int argc,char **argv) {
             verbose = false;
         }
     }
-    Random_base r;
-
     auto start = std::chrono::high_resolution_clock::now();
 
     if(verbose)
