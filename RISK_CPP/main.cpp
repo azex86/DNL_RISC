@@ -4,10 +4,20 @@
 #include <algorithm>
 #include <chrono>
 #include <thread>
+#include <stdio.h>
+#include <stdlib.h>
+#include <boost/random/uniform_int_distribution.hpp>
+#include <boost/random/taus88.hpp>
 using namespace std;
 
-int getRandomNumber() {
-    return 1 + rand() % (6 - 1 + 1);
+
+int getRandomNumber(boost::random::taus88 &gen) {
+    
+
+
+    boost::random::uniform_int_distribution<> dist(1, 6); // Distribution uniforme
+
+    return dist(gen); // Génération d'un nombre aléatoire dans la plage spécifiée
 }
 
 
@@ -80,35 +90,38 @@ inline void sort(short* data, short size)
 //Return the number of soldier remain at the end ob fight
 static int simulate_fight(int defense, int attack)
 {
+    // Génération d'une graine basée sur le temps actuel
+    unsigned seed = static_cast<unsigned>(std::chrono::system_clock::now().time_since_epoch().count());
+    boost::random::taus88 gen(seed); // Générateur taus88
     short die_defend[3];
     short die_attack[3];
     while (defense>0 && attack >0)
     {
         if (attack > 2)
         {
-            die_attack[0]= getRandomNumber();
-            die_attack[1] = getRandomNumber();
-            die_attack[2] = getRandomNumber();
+            die_attack[0]= getRandomNumber(gen);
+            die_attack[1] = getRandomNumber(gen);
+            die_attack[2] = getRandomNumber(gen);
         }
         else if (attack == 2)
         {
-            die_attack[0] = getRandomNumber();
-            die_attack[1] = getRandomNumber();
+            die_attack[0] = getRandomNumber(gen);
+            die_attack[1] = getRandomNumber(gen);
         }
         else
         {
-            die_attack[0] = getRandomNumber();
+            die_attack[0] = getRandomNumber(gen);
         }
         sort(die_attack,attack);
 
         if (defense > 1)
         {
-            die_defend[0] = getRandomNumber();
-            die_defend[1] = getRandomNumber();
+            die_defend[0] = getRandomNumber(gen);
+            die_defend[1] = getRandomNumber(gen);
         }
         else
         {
-            die_defend[0] = getRandomNumber();
+            die_defend[0] = getRandomNumber(gen);
         }
         sort(die_defend,defense);
 
@@ -173,6 +186,10 @@ static void echantillonage(int n_defend, int n_attack, int n_echantillon,int n_t
 
 int main(int argc,char **argv) {
     
+
+
+
+
     int n_defence = 10000;
     int n_attack = 8500;
     int n_echantillon = 1000000;

@@ -141,7 +141,7 @@ time elapsed : {round((end_time-last_start_time),2)} sec pour {(x-last_x)*SIZE+(
     return ax
 
 
-device = "gpu"
+device = "cpu"
 
 START_N = 1
 END_N = 50
