@@ -8,7 +8,7 @@ import subprocess
 
 last_n_win = 0
 last_remaining = 0
-def get_stat_cpu_new(n_defence:int,n_attack:int,n_echantillon:int)->tuple[int,int,float,float]:
+def get_stat_cpu_v3(n_defence:int,n_attack:int,n_echantillon:int)->tuple[int,int,float,float]:
     """Return number win  and mean of soldier remaining then rate of them"""
     global last_n_win,last_remaining
     process = subprocess.run([".\\RISK_CPP\\x64\\Release\\RISK_CPP.exe","--def",str(n_defence),"--att",str(n_attack),"--N",str(n_echantillon),'-q'],shell=True,capture_output=True)
@@ -27,11 +27,30 @@ def get_stat_cpu_new(n_defence:int,n_attack:int,n_echantillon:int)->tuple[int,in
     last_n_win = n_win
     last_remaining = mean_remaining
     return n_win,mean_remaining,n_win/n_echantillon,n_soldier_remaining/n_echantillon
-
-def get_stat_cpu(n_defence:int,n_attack:int,n_echantillon:int)->tuple[int,int,float,float]:
+def get_stat_cpu_v2(n_defence:int,n_attack:int,n_echantillon:int)->tuple[int,int,float,float]:
     """Return number win  and mean of soldier remaining then rate of them"""
     global last_n_win,last_remaining
-    process = subprocess.run([".\\RISK_CPP.exe","--def",str(n_defence),"--att",str(n_attack),"--N",str(n_echantillon),'-q'],shell=True,capture_output=True)
+    process = subprocess.run([".\\RISK_CPP_v2.exe","--def",str(n_defence),"--att",str(n_attack),"--N",str(n_echantillon),'-q'],shell=True,capture_output=True)
+    if process.returncode!=0:
+        print(f"sdtout : {process.stdout} stderr : {process.stderr}")
+        raise Exception("Erreur lors du lancement du noyau C++")
+
+    n_win = int.from_bytes(process.stdout[-8:-4],"little",signed=True)
+    n_soldier_remaining = int.from_bytes(process.stdout[-4:],"little",signed=True)
+    mean_remaining = n_soldier_remaining/n_echantillon
+
+    if  n_win< 0 or n_win>n_echantillon or abs(mean_remaining)>max(n_defence,n_attack):
+        print(f"valeur aberrante sur le CPU : win rate : {n_win/n_echantillon} soldier remaining : {n_soldier_remaining} for {n_echantillon} echantillons and {max(n_defence,n_attack)} soldiers !")
+        print(f"paramètres causant ce comportement  : --def {str(n_defence)} --att {str(n_attack)} --N {str(n_echantillon)} -q\n output : {process.stdout}")
+        return last_n_win,last_remaining,last_n_win/n_echantillon,last_remaining/n_echantillon
+    last_n_win = n_win
+    last_remaining = mean_remaining
+    return n_win,mean_remaining,n_win/n_echantillon,n_soldier_remaining/n_echantillon
+
+def get_stat_cpu_v1(n_defence:int,n_attack:int,n_echantillon:int)->tuple[int,int,float,float]:
+    """Return number win  and mean of soldier remaining then rate of them"""
+    global last_n_win,last_remaining
+    process = subprocess.run([".\\RISK_CPP_v1.exe","--def",str(n_defence),"--att",str(n_attack),"--N",str(n_echantillon),'-q'],shell=True,capture_output=True)
     if process.returncode!=0:
         print(f"sdtout : {process.stdout} stderr : {process.stderr}")
         raise Exception("Erreur lors du lancement du noyau C++")
@@ -115,24 +134,30 @@ def get_stat_python(n_defence:int,n_attack:int,n_echantillon:int)->tuple[int,int
 N = []
 Tcpu = []
 Tgpu = []
-Tcpu_new = []
+Tcpu_v2 = []
+Tcpu_v3 = []
 Tpython = []
-DEF = 100
-ATT = 100
+DEF = 1000
+ATT = 1000
 MAX = 100000
 import timeit
 
-for n in range(1,MAX):
+for n in range(1,MAX,100):
 
     start = time.monotonic()
-    win,remain,win_rate,remain_mean = get_stat_cpu(DEF,ATT,n)
+    win,remain,win_rate,remain_mean = get_stat_cpu_v1(DEF,ATT,n)
     end = time.monotonic()
     Tcpu.append(end-start)
 
     start = time.monotonic()
-    win,remain,win_rate,remain_mean = get_stat_cpu_new(DEF,ATT,n)
+    win,remain,win_rate,remain_mean = get_stat_cpu_v2(DEF,ATT,n)
     end = time.monotonic()
-    Tcpu_new.append(end-start)
+    Tcpu_v2.append(end-start)
+
+    start = time.monotonic()
+    win,remain,win_rate,remain_mean = get_stat_cpu_v3(DEF,ATT,n)
+    end = time.monotonic()
+    Tcpu_v3.append(end-start)
 
     start = time.monotonic()
     win,remain,win_rate,remain_mean = get_stat_gpu(DEF,ATT,n)
@@ -144,11 +169,20 @@ for n in range(1,MAX):
     end = time.monotonic()
     Tpython.append(end-start)
 
-    print(f"{n}/{MAX}",end="\r")
+    N.append(n)
+    print(f"{n}/{MAX} soit {round(n/MAX*100,2)}%  ",end="\r")
+
+
+
+
+
 plt.plot(N,Tpython,label="python")
 plt.plot(N,Tcpu,label="cpu")
-plt.plot(N,Tcpu_new,label="cpu_new")
+plt.plot(N,Tcpu_v3,label="cpu_v3")
+plt.plot(N,Tcpu_v2,label="cpu_v2")
 plt.plot(N,Tgpu,label="gpu")
-
+plt.legend()
 plt.xlabel("N")
 plt.ylabel("time in s")
+plt.show()
+plt.savefig("perf")
