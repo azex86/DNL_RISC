@@ -218,11 +218,11 @@ if __name__ == "__main__":
 
 
 
-    ani = FuncAnimation(fig, update,frames=1000000000, blit=False,interval=500,repeat=False)
+    ani = FuncAnimation(fig, update,frames=1000000000, blit=False,interval=300,repeat=False)
     compute = threading.Thread(target=computing)
     compute.start()
     # Affichage du graphe 3D
-    ani.save(f"animation_3D_P{TAILLE_ECHANTILLON}_N{END_N}.mp4", writer='ffmpeg',fps = 30)
+    #ani.save(f"animation_3D_P{TAILLE_ECHANTILLON}_N{END_N}.mp4", writer='ffmpeg',fps = 30)
     plt.show()
 
     """
