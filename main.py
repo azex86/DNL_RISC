@@ -98,7 +98,7 @@ def init():
     N_REMAINING = np.zeros(N_DEF.shape)
     N_WIN = np.zeros(N_DEF.shape)
     change = False
-    end = False
+    end = 0
     x = 0
     y = 0
 
@@ -113,10 +113,10 @@ def computing():
             N_WIN[x,y] = win_rate
             N_REMAINING[x,y] = remain_mean
             change = True
-    end = True
+    end = 1
 
 def update(index):
-    global change
+    global change,end
     
     if change:
         change = False
@@ -128,16 +128,20 @@ def update(index):
         ax.set_ylabel('N_ATT')
         ax.set_zlabel('Win_Rate')
         end_time = time.monotonic()
-        print(f"{x}/{SIZE}<=>{y}/{SIZE}<=>{x*SIZE+y}/{SIZE*SIZE}<=>{round((x*SIZE+y)/(SIZE*SIZE)*100,2)}%  \
+        try:print(f"{x}/{SIZE}<=>{y}/{SIZE}<=>{x*SIZE+y}/{SIZE*SIZE}<=>{round((x*SIZE+y)/(SIZE*SIZE)*100,2)}%  \
 time elapsed : {round((end_time-last_start_time),2)} sec pour {(x-last_x)*SIZE+(y-last_y)} calculs soit {round(((x-last_x)*SIZE+(y-last_y))/(end_time-last_start_time),2)} calculs/s et {round((end_time-last_start_time)/((x-last_x)*SIZE+(y-last_y)),2)} s/calcul  time elapsed since begin : {round(time.monotonic()-start_time,0)} sec",
               end='\n'if(x==SIZE-1 and y==SIZE-1)else "\r")
+        except ZeroDivisionError:print(f"{x}/{SIZE}<=>{y}/{SIZE}<=>{x*SIZE+y}/{SIZE*SIZE}<=>{round((x*SIZE+y)/(SIZE*SIZE)*100,2)}%")
         last_y = y
         last_x = x
         last_start_time = time.monotonic()
-    if end:
+    if end==1:
         print("Fin de la génération !")
         fig.colorbar(surf)
         ani.event_source.stop()
+        end+=1
+    elif end==2:
+        sys.exit()
     return ax
 
 
@@ -183,7 +187,7 @@ if __name__ == "__main__":
     N_REMAINING = np.zeros(N_DEF.shape)
     N_WIN = np.zeros(N_DEF.shape)
     change = False
-    end = False
+    end = 0
     x = 0
     y = 0
 
@@ -214,12 +218,11 @@ if __name__ == "__main__":
 
 
 
-    ani = FuncAnimation(fig, update,frames=None, blit=False,interval=500,repeat=False)
+    ani = FuncAnimation(fig, update,frames=1000000000, blit=False,interval=500,repeat=False)
     compute = threading.Thread(target=computing)
     compute.start()
     # Affichage du graphe 3D
-    #ani.save('animation_3D.mp4', writer='ffmpeg', fps=30,savefig_kwargs={ 'pad_inches': 'tight'})
-
+    ani.save(f"animation_3D_P{TAILLE_ECHANTILLON}_N{END_N}.mp4", writer='ffmpeg',fps = 30)
     plt.show()
 
     """
