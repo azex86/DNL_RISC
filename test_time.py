@@ -130,59 +130,44 @@ def get_stat_python(n_defence:int,n_attack:int,n_echantillon:int)->tuple[int,int
     return n_win,mean_remaining,n_win/n_echantillon,n_soldier_remaining/n_echantillon
 
 
-
-N = []
-Tcpu = []
-Tgpu = []
-Tcpu_v2 = []
-Tcpu_v3 = []
-Tpython = []
-DEF = 1000
-ATT = 1000
+START = 1
+STEP = 1000
 MAX = 100000
-import timeit
 
-for n in range(1,MAX,100):
+N = np.array([[DEF for ATT in range(START,MAX,STEP)] for DEF in range(START,MAX,STEP)])
+DEF_ATT = np.array([[ATT for ATT in range(START,MAX,STEP)] for DEF in range(START,MAX,STEP)])
+Tcpu = np.zeros(N.shape)
+Tgpu = np.zeros(N.shape)
 
-    start = time.monotonic()
-    win,remain,win_rate,remain_mean = get_stat_cpu_v1(DEF,ATT,n)
-    end = time.monotonic()
-    Tcpu.append(end-start)
+start_time = time.monotonic()
+x = 0
 
-    start = time.monotonic()
-    win,remain,win_rate,remain_mean = get_stat_cpu_v2(DEF,ATT,n)
-    end = time.monotonic()
-    Tcpu_v2.append(end-start)
+for n in range(START,MAX,STEP):
+    y = 0
+    for n1 in range(START,MAX,STEP):
+        start = time.monotonic()
+        win,remain,win_rate,remain_mean = get_stat_cpu_v3(n1,n1,n)
+        end = time.monotonic()
+        Tcpu[x][y]=end-start
 
-    start = time.monotonic()
-    win,remain,win_rate,remain_mean = get_stat_cpu_v3(DEF,ATT,n)
-    end = time.monotonic()
-    Tcpu_v3.append(end-start)
+        start = time.monotonic()
+        win,remain,win_rate,remain_mean = get_stat_gpu(n1,n1,n)
+        end = time.monotonic()
+        Tgpu[x][y]=end-start
 
-    start = time.monotonic()
-    win,remain,win_rate,remain_mean = get_stat_gpu(DEF,ATT,n)
-    end = time.monotonic()
-    Tgpu.append(end-start)
+        #print(f"{n}/{MAX} soit {round(n/MAX*100,2)}%  P:{round(Tpython[-1],2)} GPU:{round(Tgpu[-1],2)} CPU_v1:{round(Tcpu[-1],2)} CPU_v2:{round(Tcpu_v2[-1],2)} CPU_v3:{round(Tcpu_v3[-1],2)}",end="\r")
+        print(f"{n}/{MAX} {n1}/{MAX} soit {round((n*MAX+n1)/(MAX*MAX)*100,2)}%  time elapsed : {round(time.monotonic()-start_time,2)}s time reminding : {round((time.monotonic()-start_time)*(1-(n*MAX+n1)/(MAX*MAX)),2)} s",end="\r")
+        y+=1
+    x+=1
 
-    start = time.monotonic()
-    win,remain,win_rate,remain_mean = get_stat_python(DEF,ATT,n)
-    end = time.monotonic()
-    Tpython.append(end-start)
+fig = plt.figure()
+ax = fig.add_subplot(111,projection="3d")
+surf = ax.plot_surface(N,DEF_ATT,Tcpu,label="cpu")
+surf = ax.plot_surface(N,DEF_ATT,Tgpu,label="GPU")
+ax.set_xlabel("Nombre d'échantillon")
+ax.set_ylabel('N_DEF_ATT')
+ax.set_zlabel('Time in s')
+ax.legend()
+fig.legend()
 
-    N.append(n)
-    print(f"{n}/{MAX} soit {round(n/MAX*100,2)}%  ",end="\r")
-
-
-
-
-
-plt.plot(N,Tpython,label="python")
-plt.plot(N,Tcpu,label="cpu")
-plt.plot(N,Tcpu_v3,label="cpu_v3")
-plt.plot(N,Tcpu_v2,label="cpu_v2")
-plt.plot(N,Tgpu,label="gpu")
-plt.legend()
-plt.xlabel("N")
-plt.ylabel("time in s")
 plt.show()
-plt.savefig("perf")
